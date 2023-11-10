@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+
+import os
+import socket
+import sys
+
+class Requester:
+    def __init__(self):
+        self.clrf = "\r\n"
+        self.host = ""
+        self.port = 70
+        self.selector = ""
+
+    def request(self, host="", port="", selector=""):
+        if host:
+            self.host = host
+        if port:
+            self.port = port
+        if selector:
+            self.selector = selector
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((self.host, self.port))
+        s.send((self.selector + self.clrf).encode("utf-8"))
+        s.shutdown(1)
+        return s.makefile("r")
+
+class Viewer:
+    def __init__(self):
+        self.content = []
+
+    def populate_content(self, page):
+        page = page.read().split("\n")
+        for line in page:
+            if not line or line.startswith("."):
+                continue
+            parts = line[1:].split("\t")
+            parts.insert(0, line[0])
+            self.content.append(parts)
+
+    def view(self):
+        for line in self.content:
+            if (line[0] == "i"):
+                print(line[1])
+
+class Browser:
+    def __init__(self):
+        self.requester = Requester()
+        self.viewer = Viewer()
+
+    def run(self):
+        hostname = "zaibatsu.circumlunar.space"
+        selector = ""
+        self.viewer.populate_content(self.requester.request(host=hostname, selector=selector))
+        self.viewer.view()
+
+browser = Browser()
+browser.run()
